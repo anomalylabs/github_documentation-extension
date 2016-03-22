@@ -1,0 +1,9 @@
+{
+    "name": "anomaly/github_documentation-extension",
+    "type": "streams-addon",
+    "autoload": {
+        "psr-4": {
+            "Anomaly\\GithubDocumentationExtension\\": "src/"
+        }
+    }
+}
