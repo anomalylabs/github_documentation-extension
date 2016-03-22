@@ -1,6 +1,24 @@
 {
     "name": "anomaly/github_documentation-extension",
+    "description": "A GitHub project source for the documentation module.",
     "type": "streams-addon",
+    "keywords": [
+        "github documentation",
+        "pyrocms extension"
+    ],
+    "homepage": "http://pyrocms.com/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PyroCMS, Inc.",
+            "email": "support@pyrocms.com",
+            "homepage": "http://pyrocms.com/",
+            "role": "Owner"
+        }
+    ],
+    "support": {
+        "email": "support@pyrocms.com"
+    },
     "autoload": {
         "psr-4": {
             "Anomaly\\GithubDocumentationExtension\\": "src/"

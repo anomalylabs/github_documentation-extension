@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title'       => 'Github Documentation',
+    'title'       => 'Github',
     'name'        => 'Github Documentation Extension',
-    'description' => ''
+    'description' => 'A GitHub project source for the documentation module.'
 ];
