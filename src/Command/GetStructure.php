@@ -64,12 +64,15 @@ class GetStructure implements SelfHandling
 
         return json_decode(
             base64_decode(
-                $github->repo()->contents()->show(
-                    $username,
-                    $repository,
-                    'docs/structure.json',
-                    $this->version
-                )['content']
+                array_get(
+                    $github->repo()->contents()->show(
+                        $username,
+                        $repository,
+                        'docs/structure.json',
+                        $this->project->reference($this->version ?: 'master')
+                    ),
+                    'content'
+                )
             )
         );
     }

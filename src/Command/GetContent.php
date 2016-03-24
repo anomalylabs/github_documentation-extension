@@ -77,7 +77,15 @@ class GetContent implements SelfHandling
         }
 
         return base64_decode(
-            array_get($github->repo()->contents()->show($username, $repository, $path, $this->version), 'content')
+            array_get(
+                $github->repo()->contents()->show(
+                    $username,
+                    $repository,
+                    $path,
+                    $this->project->reference($this->version ?: 'master')
+                ),
+                'content'
+            )
         );
     }
 }

@@ -63,7 +63,15 @@ class GetComposer implements SelfHandling
 
         return json_decode(
             base64_decode(
-                $github->repo()->contents()->show($username, $repository, 'composer.json', $this->version)['content']
+                array_get(
+                    $github->repo()->contents()->show(
+                        $username,
+                        $repository,
+                        'composer.json',
+                        $this->project->reference($this->version ?: 'master')
+                    ),
+                    'content'
+                )
             )
         );
     }
