@@ -20,7 +20,7 @@
         "email": "support@pyrocms.com"
     },
     "require": {
-        "knplabs/github-api": "~1.4"
+        "graham-campbell/github": "^4.0"
     },
     "autoload": {
         "psr-4": {
