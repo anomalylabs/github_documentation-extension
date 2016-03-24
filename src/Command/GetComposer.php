@@ -28,22 +28,22 @@ class GetComposer implements SelfHandling
     protected $project;
 
     /**
-     * The project version.
+     * The project reference.
      *
      * @var string
      */
-    protected $version;
+    protected $reference;
 
     /**
      * Create a new GetComposer instance.
      *
      * @param ProjectInterface $project
-     * @param string           $version
+     * @param string           $reference
      */
-    public function __construct(ProjectInterface $project, $version)
+    public function __construct(ProjectInterface $project, $reference)
     {
         $this->project = $project;
-        $this->version = $version;
+        $this->reference = $reference;
     }
 
     /**
@@ -68,7 +68,7 @@ class GetComposer implements SelfHandling
                         $username,
                         $repository,
                         'composer.json',
-                        $this->project->reference($this->version ?: 'master')
+                        $this->reference
                     ),
                     'content'
                 )

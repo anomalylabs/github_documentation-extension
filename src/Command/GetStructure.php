@@ -28,22 +28,22 @@ class GetStructure implements SelfHandling
     protected $project;
 
     /**
-     * The project version.
+     * The project reference.
      *
      * @var string
      */
-    protected $version;
+    protected $reference;
 
     /**
      * Create a new GetStructure instance.
      *
      * @param ProjectInterface $project
-     * @param string           $version
+     * @param string           $reference
      */
-    public function __construct(ProjectInterface $project, $version)
+    public function __construct(ProjectInterface $project, $reference)
     {
         $this->project = $project;
-        $this->version = $version;
+        $this->reference = $reference;
     }
 
     /**
@@ -69,7 +69,7 @@ class GetStructure implements SelfHandling
                         $username,
                         $repository,
                         'docs/structure.json',
-                        $this->project->reference($this->version ?: 'master')
+                        $this->reference
                     ),
                     'content'
                 )

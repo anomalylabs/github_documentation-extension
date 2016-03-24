@@ -28,11 +28,11 @@ class GetContent implements SelfHandling
     protected $project;
 
     /**
-     * The project version.
+     * The project reference.
      *
      * @var string
      */
-    protected $version;
+    protected $reference;
 
     /**
      * The file path.
@@ -45,14 +45,14 @@ class GetContent implements SelfHandling
      * Create a new GetContent instance.
      *
      * @param ProjectInterface $project
-     * @param string           $version
+     * @param string           $reference
      * @param string           $file
      */
-    public function __construct(ProjectInterface $project, $version, $file)
+    public function __construct(ProjectInterface $project, $reference, $file)
     {
-        $this->project = $project;
-        $this->version = $version;
-        $this->file    = $file;
+        $this->project   = $project;
+        $this->reference = $reference;
+        $this->file      = $file;
     }
 
     /**
@@ -72,7 +72,7 @@ class GetContent implements SelfHandling
 
         $path = 'docs/' . $config->get('app.locale') . '/' . $this->file . '.md';
 
-        if (!$github->repo()->contents()->exists($username, $repository, $path, $this->version)) {
+        if (!$github->repo()->contents()->exists($username, $repository, $path, $this->reference)) {
             $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->file . '.md';
         }
 
@@ -82,7 +82,7 @@ class GetContent implements SelfHandling
                     $username,
                     $repository,
                     $path,
-                    $this->project->reference($this->version ?: 'master')
+                    $this->reference
                 ),
                 'content'
             )
