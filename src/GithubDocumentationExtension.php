@@ -19,6 +19,6 @@ class GithubDocumentationExtension extends Extension
      *
      * @var null|string
      */
-    protected $provides = 'anomaly.module.documentation.source.github';
+    protected $provides = 'anomaly.module.documentation::source.github';
 
 }
