@@ -19,6 +19,9 @@
     "support": {
         "email": "support@pyrocms.com"
     },
+    "require": {
+        "knplabs/github-api": "~1.4"
+    },
     "autoload": {
         "psr-4": {
             "Anomaly\\GithubDocumentationExtension\\": "src/"
