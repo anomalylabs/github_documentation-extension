@@ -1,5 +1,7 @@
 <?php namespace Anomaly\GithubDocumentationExtension;
 
+use Anomaly\DocumentationModule\Source\SourceExtension;
+use Anomaly\GithubDocumentationExtension\Command\GetFileContent;
 use Anomaly\Streams\Platform\Addon\Extension\Extension;
 
 /**
@@ -10,7 +12,7 @@ use Anomaly\Streams\Platform\Addon\Extension\Extension;
  * @author        Ryan Thompson <ryan@pyrocms.com>
  * @package       Anomaly\GithubDocumentationExtension
  */
-class GithubDocumentationExtension extends Extension
+class GithubDocumentationExtension extends SourceExtension
 {
 
     /**
@@ -20,5 +22,17 @@ class GithubDocumentationExtension extends Extension
      * @var null|string
      */
     protected $provides = 'anomaly.module.documentation::source.github';
+
+    /**
+     * Return the file's content.
+     *
+     * @param $section
+     * @param $file
+     * @return string
+     */
+    public function content($section, $file)
+    {
+        return $this->dispatch(new GetFileContent($section, $file));
+    }
 
 }
