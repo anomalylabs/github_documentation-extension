@@ -35,24 +35,24 @@ class GetContent implements SelfHandling
     protected $reference;
 
     /**
-     * The file path.
+     * The documentation page.
      *
      * @var string
      */
-    protected $file;
+    protected $page;
 
     /**
      * Create a new GetContent instance.
      *
      * @param ProjectInterface $project
      * @param string           $reference
-     * @param string           $file
+     * @param string           $page
      */
-    public function __construct(ProjectInterface $project, $reference, $file)
+    public function __construct(ProjectInterface $project, $reference, $page)
     {
         $this->project   = $project;
         $this->reference = $reference;
-        $this->file      = $file;
+        $this->page      = $page;
     }
 
     /**
@@ -70,10 +70,10 @@ class GetContent implements SelfHandling
         $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
         $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
 
-        $path = 'docs/' . $config->get('app.locale') . '/' . $this->file . '.md';
+        $path = 'docs/' . $config->get('app.locale') . '/' . $this->page . '.md';
 
         if (!$github->repo()->contents()->exists($username, $repository, $path, $this->reference)) {
-            $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->file . '.md';
+            $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->page . '.md';
         }
 
         return base64_decode(

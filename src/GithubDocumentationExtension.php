@@ -31,7 +31,7 @@ class GithubDocumentationExtension extends DocumentationExtension
      *
      * @param ProjectInterface $project
      * @param                  $reference
-     * @return \stdClass
+     * @return array
      */
     public function structure(ProjectInterface $project, $reference)
     {
@@ -51,15 +51,15 @@ class GithubDocumentationExtension extends DocumentationExtension
     }
 
     /**
-     * Return the file content for a project.
+     * Return the page content for a project.
      *
      * @param ProjectInterface $project
      * @param                  $reference
-     * @param                  $file
+     * @param                  $page
      * @return string
      */
-    public function content(ProjectInterface $project, $reference, $file)
+    public function content(ProjectInterface $project, $reference, $page)
     {
-        return $this->dispatch(new GetContent($project, $reference, $file));
+        return $this->dispatch(new GetContent($project, $reference, $page));
     }
 }

@@ -42,7 +42,7 @@ class GetStructure implements SelfHandling
      */
     public function __construct(ProjectInterface $project, $reference)
     {
-        $this->project = $project;
+        $this->project   = $project;
         $this->reference = $reference;
     }
 
@@ -73,7 +73,8 @@ class GetStructure implements SelfHandling
                     ),
                     'content'
                 )
-            )
+            ),
+            true
         );
     }
 }
