@@ -61,7 +61,6 @@ class GetStructure implements SelfHandling
         $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
         $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
 
-
         return json_decode(
             base64_decode(
                 array_get(
