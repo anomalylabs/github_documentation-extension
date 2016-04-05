@@ -2,7 +2,8 @@
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
-use GrahamCampbell\GitHub\GitHubManager;
+use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
+use Guzzle\Http\Client;
 use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -42,24 +43,29 @@ class GetComposer implements SelfHandling
      */
     public function __construct(ProjectInterface $project, $reference)
     {
-        $this->project = $project;
+        $this->project   = $project;
         $this->reference = $reference;
     }
 
     /**
-     * @param GitHubManager                    $github
-     * @param Repository                       $config
      * @param ConfigurationRepositoryInterface $configuration
      * @return \stdClass
      */
-    public function handle(GitHubManager $github, ConfigurationRepositoryInterface $configuration)
+    public function handle(ConfigurationRepositoryInterface $configuration)
     {
-        $this->dispatch(new SetConnection($this->project));
-
         $namespace = 'anomaly.extension.github_documentation';
 
+        /* @var EncryptedFieldTypePresenter $token */
         $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
         $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
+        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+
+        // Decrypt the value.
+        $token = $token->decrypt();
+
+        $client = new Client('https://api.github.com');
+
+        dd(json_decode($client->get("repos/{$username}/pyro-theme/contents/composer.json?token={$token}")->send()->getBody(true), true));
 
         return json_decode(
             base64_decode(
