@@ -45,20 +45,19 @@ class SetConnection implements SelfHandling
         $namespace = 'anomaly.extension.github_documentation';
 
         /* @var EncryptedFieldTypePresenter $token */
-        $username = $configuration->value($namespace . '::username', $this->project->getSlug());
-        $token    = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+        $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
+        $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
+        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
 
         // Decrypt the value.
         $token = $token->decrypt();
 
         $config->set(
-            'github.connections.main',
+            'github.connections.' . $username . '/' . $repository,
             [
                 'token'  => $token,
                 'method' => 'token'
             ]
         );
-
-        $config->set("github.connections.{$username}");
     }
 }

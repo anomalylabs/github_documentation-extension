@@ -72,13 +72,9 @@ class GetContent implements SelfHandling
 
         $path = 'docs/' . $config->get('app.locale') . '/' . $this->page . '.md';
 
-        if (!$github->repo()->contents()->exists($username, $repository, $path, $this->reference)) {
-            $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->page . '.md';
-        }
-
         return base64_decode(
             array_get(
-                $github->repo()->contents()->show(
+                $github->connection($username . '/' . $repository)->repo()->contents()->show(
                     $username,
                     $repository,
                     $path,
