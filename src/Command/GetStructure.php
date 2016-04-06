@@ -2,7 +2,8 @@
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
-use GrahamCampbell\GitHub\GitHubManager;
+use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
+use Github\Client;
 use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -47,29 +48,39 @@ class GetStructure implements SelfHandling
     }
 
     /**
-     * @param GitHubManager                    $github
-     * @param Repository                       $config
+     * Handle the command.
+     *
      * @param ConfigurationRepositoryInterface $configuration
      * @return \stdClass
      */
-    public function handle(GitHubManager $github, ConfigurationRepositoryInterface $configuration)
+    public function handle(ConfigurationRepositoryInterface $configuration)
     {
-        $this->dispatch(new SetConnection($this->project));
-
         $namespace = 'anomaly.extension.github_documentation';
 
+        /* @var EncryptedFieldTypePresenter $token */
         $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
         $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
+        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+
+        // Decrypt the value.
+        $token = $token->decrypt();
+
+        $client = new Client();
+
+        $client->authenticate($token, null, 'http_token');
 
         return json_decode(
             base64_decode(
                 array_get(
-                    $github->connection($username . '/' . $repository)->repo()->contents()->show(
-                        $username,
-                        $repository,
-                        'docs/structure.json',
-                        $this->reference
-                    ),
+                    $client
+                        ->repos()
+                        ->contents()
+                        ->show(
+                            $username,
+                            $repository,
+                            'docs/structure.json',
+                            $this->reference
+                        ),
                     'content'
                 )
             ),

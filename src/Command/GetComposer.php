@@ -3,7 +3,7 @@
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
 use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
-use Guzzle\Http\Client;
+use Github\Client;
 use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -48,6 +48,8 @@ class GetComposer implements SelfHandling
     }
 
     /**
+     * Handle the command.
+     *
      * @param ConfigurationRepositoryInterface $configuration
      * @return \stdClass
      */
@@ -63,19 +65,21 @@ class GetComposer implements SelfHandling
         // Decrypt the value.
         $token = $token->decrypt();
 
-        $client = new Client('https://api.github.com');
+        $client = new Client();
 
-        dd(json_decode($client->get("repos/{$username}/pyro-theme/contents/composer.json?token={$token}")->send()->getBody(true), true));
+        $client->authenticate($token, null, 'http_token');
 
         return json_decode(
             base64_decode(
                 array_get(
-                    $github->connection($username . '/' . $repository)->repo()->contents()->show(
-                        $username,
-                        $repository,
-                        'composer.json',
-                        $this->reference
-                    ),
+                    $client
+                        ->repos()
+                        ->contents()
+                        ->show(
+                            $username,
+                            $repository,
+                            'composer.json'
+                        ),
                     'content'
                 )
             )

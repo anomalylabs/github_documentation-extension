@@ -2,7 +2,8 @@
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
-use GrahamCampbell\GitHub\GitHubManager;
+use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
+use Github\Client;
 use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -56,30 +57,45 @@ class GetContent implements SelfHandling
     }
 
     /**
-     * @param GitHubManager                    $github
+     * Handle the command.
+     *
      * @param Repository                       $config
      * @param ConfigurationRepositoryInterface $configuration
      * @return string
      */
-    public function handle(GitHubManager $github, Repository $config, ConfigurationRepositoryInterface $configuration)
+    public function handle(Repository $config, ConfigurationRepositoryInterface $configuration)
     {
-        $this->dispatch(new SetConnection($this->project));
-
         $namespace = 'anomaly.extension.github_documentation';
 
+        /* @var EncryptedFieldTypePresenter $token */
         $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
         $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
+        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+
+        // Decrypt the value.
+        $token = $token->decrypt();
+
+        $client = new Client();
+
+        $client->authenticate($token, null, 'http_token');
 
         $path = 'docs/' . $config->get('app.locale') . '/' . $this->page . '.md';
 
+        if (!$client->repos()->contents()->exists($username, $repository, $path, $this->reference)) {
+            $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->page . '.md';
+        }
+
         return base64_decode(
             array_get(
-                $github->connection($username . '/' . $repository)->repo()->contents()->show(
-                    $username,
-                    $repository,
-                    $path,
-                    $this->reference
-                ),
+                $client
+                    ->repos()
+                    ->contents()
+                    ->show(
+                        $username,
+                        $repository,
+                        $path,
+                        $this->reference
+                    ),
                 'content'
             )
         );
