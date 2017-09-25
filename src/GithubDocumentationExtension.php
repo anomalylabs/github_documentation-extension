@@ -3,6 +3,7 @@
 use Anomaly\ConfigurationModule\Configuration\Form\ConfigurationFormBuilder;
 use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
 use Anomaly\GithubDocumentationExtension\Command\GetComposer;
+use Anomaly\GithubDocumentationExtension\Command\GetPages;
 use Anomaly\GithubDocumentationExtension\Command\GetStructure;
 
 /**
@@ -25,14 +26,25 @@ class GithubDocumentationExtension extends DocumentationExtension
     protected $provides = 'anomaly.module.documentation::documentation.github';
 
     /**
-     * Return the documentation structure object.
+     * Return the documentation structure.
      *
      * @param $reference
      * @return array
      */
-    public function build($reference)
+    public function structure($reference)
     {
         return $this->dispatch(new GetStructure($this, $reference));
+    }
+
+    /**
+     * Return the documentation pages.
+     *
+     * @param $reference
+     * @return array
+     */
+    public function pages($reference)
+    {
+        return $this->dispatch(new GetPages($this, $reference));
     }
 
     /**

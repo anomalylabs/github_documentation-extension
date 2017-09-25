@@ -2,19 +2,20 @@
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
+use Anomaly\DocumentationModule\Documentation\DocumentationParser;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
 use Github\Client;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
 /**
- * Class GetStructure
+ * Class GetPages
  *
  * @link   http://pyrocms.com/
  * @author PyroCMS, Inc. <support@pyrocms.com>
  * @author Ryan Thompson <ryan@pyrocms.com>
  */
-class GetStructure
+class GetPages
 {
 
     use DispatchesJobs;
@@ -41,7 +42,7 @@ class GetStructure
     protected $path;
 
     /**
-     * Create a new GetStructure instance.
+     * Create a new GetPages instance.
      *
      * @param ProjectInterface $project
      * @param string           $reference
@@ -58,10 +59,17 @@ class GetStructure
      * Handle the command.
      *
      * @param ConfigurationRepositoryInterface $configuration
+     * @param DocumentationParser              $parser
+     * @param Repository                       $config
      * @return array
      */
-    public function handle(Repository $config, ConfigurationRepositoryInterface $configuration)
-    {
+    public function handle(
+        ConfigurationRepositoryInterface $configuration,
+        DocumentationParser $parser,
+        Repository $config
+    ) {
+        $pages = [];
+
         $project = $this->extension->getProject();
 
         $namespace = 'anomaly.extension.github_documentation';
@@ -91,7 +99,7 @@ class GetStructure
             }
         }
 
-        $pages = $client
+        $content = $client
             ->repos()
             ->contents()
             ->show(
@@ -101,36 +109,32 @@ class GetStructure
                 $this->reference
             );
 
-        $pages = array_combine(
-            array_map(
-                function ($directory) {
-                    return $directory['name'];
-                },
-                $pages
-            ),
-            array_map(
-                function ($page) {
+        array_map(
+            function ($resource) use ($parser, &$pages) {
 
-                    if ($page['type'] == 'dir') {
+                if ($resource['type'] == 'dir') {
 
-                        $page['children'] = $this->dispatch(
-                            new GetStructure($this->extension, $this->reference, $page['path'])
-                        );
-                    }
+                    $pages[$resource['name']] = $this->dispatch(
+                        new GetPages($this->extension, $this->reference, $resource['path'])
+                    );
+                }
 
-                    if ($page['type'] != 'dir') {
+                if ($resource['type'] != 'dir') {
 
-                        $page['content'] = $this->dispatch(
-                            new GetContent($this->extension, $this->reference, $page['path'])
-                        );
+                    $content = $this->dispatch(
+                        new GetContent($this->extension, $this->reference, $resource['path'])
+                    );
 
-                        dd($page);
-                    }
-
-                    return $page;
-                },
-                $pages
-            )
+                    $pages[basename(
+                        $resource['name'],
+                        '.' . pathinfo($resource['name'], PATHINFO_EXTENSION)
+                    )] = array_merge(
+                        ['content' => $parser->content($content)],
+                        $parser->attributes($content)
+                    );
+                }
+            },
+            $content
         );
 
         return $pages;
