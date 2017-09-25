@@ -5,15 +5,16 @@ use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
 use Github\Client;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Symfony\Component\Yaml\Yaml;
 
 /**
- * Class GetComposer
+ * Class GetPage
  *
  * @link   http://pyrocms.com/
  * @author PyroCMS, Inc. <support@pyrocms.com>
  * @author Ryan Thompson <ryan@pyrocms.com>
  */
-class GetComposer
+class GetPage
 {
 
     use DispatchesJobs;
@@ -33,15 +34,24 @@ class GetComposer
     protected $reference;
 
     /**
-     * Create a new GetComposer instance.
+     * The documentation path.
+     *
+     * @var string
+     */
+    protected $path;
+
+    /**
+     * Create a new GetPage instance.
      *
      * @param DocumentationExtension $extension
      * @param string                 $reference
+     * @param string                 $path
      */
-    public function __construct(DocumentationExtension $extension, $reference)
+    public function __construct(DocumentationExtension $extension, $reference, $path)
     {
         $this->extension = $extension;
         $this->reference = $reference;
+        $this->path      = $path;
     }
 
     /**
@@ -49,7 +59,7 @@ class GetComposer
      *
      * @param Repository                       $config
      * @param ConfigurationRepositoryInterface $configuration
-     * @return \stdClass
+     * @return string
      */
     public function handle(Repository $config, ConfigurationRepositoryInterface $configuration)
     {
@@ -73,7 +83,13 @@ class GetComposer
 
         $client->authenticate($token, null, 'http_token');
 
-        return json_decode(
+        $path = $this->path . '/page.yaml';
+
+        if (!$client->repos()->contents()->exists($username, $repository, $path, $this->reference)) {
+            return null;
+        }
+
+        return (new Yaml())->parse(
             base64_decode(
                 array_get(
                     $client
@@ -82,7 +98,8 @@ class GetComposer
                         ->show(
                             $username,
                             $repository,
-                            'composer.json'
+                            $path,
+                            $this->reference
                         ),
                     'content'
                 )

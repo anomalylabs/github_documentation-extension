@@ -1,32 +1,30 @@
 <?php namespace Anomaly\GithubDocumentationExtension\Command;
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
+use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
-use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
 use Github\Client;
-use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
 /**
  * Class GetStructure
  *
- * @link          http://pyrocms.com/
- * @author        PyroCMS, Inc. <support@pyrocms.com>
- * @author        Ryan Thompson <ryan@pyrocms.com>
- * @package       Anomaly\GithubDocumentationExtension\Command
+ * @link   http://pyrocms.com/
+ * @author PyroCMS, Inc. <support@pyrocms.com>
+ * @author Ryan Thompson <ryan@pyrocms.com>
  */
-class GetStructure implements SelfHandling
+class GetStructure
 {
 
     use DispatchesJobs;
 
     /**
-     * The project instance.
+     * The documentation extension.
      *
-     * @var ProjectInterface
+     * @var DocumentationExtension
      */
-    protected $project;
+    protected $extension;
 
     /**
      * The project reference.
@@ -36,15 +34,24 @@ class GetStructure implements SelfHandling
     protected $reference;
 
     /**
+     * The path to get.
+     *
+     * @var string|null
+     */
+    protected $path;
+
+    /**
      * Create a new GetStructure instance.
      *
      * @param ProjectInterface $project
      * @param string           $reference
+     * @param null             $path
      */
-    public function __construct(ProjectInterface $project, $reference)
+    public function __construct(DocumentationExtension $extension, $reference, $path = null)
     {
-        $this->project   = $project;
+        $this->extension = $extension;
         $this->reference = $reference;
+        $this->path      = $path;
     }
 
     /**
@@ -53,38 +60,79 @@ class GetStructure implements SelfHandling
      * @param ConfigurationRepositoryInterface $configuration
      * @return \stdClass
      */
-    public function handle(ConfigurationRepositoryInterface $configuration)
+    public function handle(Repository $config, ConfigurationRepositoryInterface $configuration)
     {
+        $project = $this->extension->getProject();
+
         $namespace = 'anomaly.extension.github_documentation';
 
-        /* @var EncryptedFieldTypePresenter $token */
-        $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
-        $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
-        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+        $token = $config->get($namespace . '::github.token');
 
-        // Decrypt the value.
-        $token = $token->decrypt();
+        $username = $configuration->value(
+            $namespace . '::username',
+            $project->getId()
+        );
+
+        $repository = $configuration->value(
+            $namespace . '::repository',
+            $project->getId()
+        );
 
         $client = new Client();
 
         $client->authenticate($token, null, 'http_token');
 
-        return json_decode(
-            base64_decode(
-                array_get(
-                    $client
-                        ->repos()
-                        ->contents()
-                        ->show(
-                            $username,
-                            $repository,
-                            'docs/structure.json',
-                            $this->reference
-                        ),
-                    'content'
-                )
+        if (!$this->path) {
+
+            $this->path = 'docs/' . $config->get('app.locale');
+
+            if (!$client->repos()->contents()->exists($username, $repository, $this->path, $this->reference)) {
+                $this->path = 'docs/' . $config->get('app.fallback_locale');
+            }
+        }
+
+        $pages = $client
+            ->repos()
+            ->contents()
+            ->show(
+                $username,
+                $repository,
+                $this->path,
+                $this->reference
+            );
+
+        $pages = array_combine(
+            array_map(
+                function ($directory) {
+                    return $directory['name'];
+                },
+                $pages
             ),
-            true
+            array_map(
+                function ($page) {
+
+                    if ($page['type'] == 'dir') {
+
+                        $page['children'] = $this->dispatch(
+                            new GetStructure($this->extension, $this->reference, $page['path'])
+                        );
+                    }
+
+                    if ($page['type'] != 'dir') {
+
+                        $page['content'] = $this->dispatch(
+                            new GetContent($this->extension, $this->reference, $page['path'])
+                        );
+
+                        dd($page);
+                    }
+
+                    return $page;
+                },
+                $pages
+            )
         );
+
+        return $pages;
     }
 }

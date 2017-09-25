@@ -1,32 +1,29 @@
 <?php namespace Anomaly\GithubDocumentationExtension\Command;
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
-use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
-use Anomaly\EncryptedFieldType\EncryptedFieldTypePresenter;
+use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
 use Github\Client;
-use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
 /**
  * Class GetContent
  *
- * @link          http://pyrocms.com/
- * @author        PyroCMS, Inc. <support@pyrocms.com>
- * @author        Ryan Thompson <ryan@pyrocms.com>
- * @package       Anomaly\GithubDocumentationExtension\Command
+ * @link   http://pyrocms.com/
+ * @author PyroCMS, Inc. <support@pyrocms.com>
+ * @author Ryan Thompson <ryan@pyrocms.com>
  */
-class GetContent implements SelfHandling
+class GetContent
 {
 
     use DispatchesJobs;
 
     /**
-     * The project instance.
+     * The documentation extension.
      *
-     * @var ProjectInterface
+     * @var DocumentationExtension
      */
-    protected $project;
+    protected $extension;
 
     /**
      * The project reference.
@@ -36,24 +33,24 @@ class GetContent implements SelfHandling
     protected $reference;
 
     /**
-     * The documentation page.
+     * The page path.
      *
      * @var string
      */
-    protected $page;
+    protected $path;
 
     /**
      * Create a new GetContent instance.
      *
-     * @param ProjectInterface $project
-     * @param string           $reference
-     * @param string           $page
+     * @param DocumentationExtension $extension
+     * @param string                 $reference
+     * @param string                 $path
      */
-    public function __construct(ProjectInterface $project, $reference, $page)
+    public function __construct(DocumentationExtension $extension, $reference, $path)
     {
-        $this->project   = $project;
+        $this->extension = $extension;
         $this->reference = $reference;
-        $this->page      = $page;
+        $this->path      = $path;
     }
 
     /**
@@ -65,25 +62,25 @@ class GetContent implements SelfHandling
      */
     public function handle(Repository $config, ConfigurationRepositoryInterface $configuration)
     {
+        $project = $this->extension->getProject();
+
         $namespace = 'anomaly.extension.github_documentation';
 
-        /* @var EncryptedFieldTypePresenter $token */
-        $username   = $configuration->value($namespace . '::username', $this->project->getSlug());
-        $repository = $configuration->value($namespace . '::repository', $this->project->getSlug());
-        $token      = $configuration->presenter($namespace . '::token', $this->project->getSlug());
+        $token = $config->get($namespace . '::github.token');
 
-        // Decrypt the value.
-        $token = $token->decrypt();
+        $username = $configuration->value(
+            $namespace . '::username',
+            $project->getId()
+        );
+
+        $repository = $configuration->value(
+            $namespace . '::repository',
+            $project->getId()
+        );
 
         $client = new Client();
 
         $client->authenticate($token, null, 'http_token');
-
-        $path = 'docs/' . $config->get('app.locale') . '/' . $this->page . '.md';
-
-        if (!$client->repos()->contents()->exists($username, $repository, $path, $this->reference)) {
-            $path = 'docs/' . $config->get('app.fallback_locale') . '/' . $this->page . '.md';
-        }
 
         return base64_decode(
             array_get(
@@ -93,7 +90,7 @@ class GetContent implements SelfHandling
                     ->show(
                         $username,
                         $repository,
-                        $path,
+                        $this->path,
                         $this->reference
                     ),
                 'content'

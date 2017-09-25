@@ -1,11 +1,9 @@
 <?php namespace Anomaly\GithubDocumentationExtension;
 
+use Anomaly\ConfigurationModule\Configuration\Form\ConfigurationFormBuilder;
 use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
-use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
 use Anomaly\GithubDocumentationExtension\Command\GetComposer;
-use Anomaly\GithubDocumentationExtension\Command\GetContent;
 use Anomaly\GithubDocumentationExtension\Command\GetStructure;
-use Anomaly\Streams\Platform\Addon\Extension\Extension;
 
 /**
  * Class GithubDocumentationExtension
@@ -29,37 +27,33 @@ class GithubDocumentationExtension extends DocumentationExtension
     /**
      * Return the documentation structure object.
      *
-     * @param ProjectInterface $project
-     * @param                  $reference
+     * @param $reference
      * @return array
      */
-    public function structure(ProjectInterface $project, $reference)
+    public function build($reference)
     {
-        return $this->dispatch(new GetStructure($project, $reference));
+        return $this->dispatch(new GetStructure($this, $reference));
     }
 
     /**
      * Return the composer json object.
      *
-     * @param ProjectInterface $project
-     * @param                  $reference
+     * @param $reference
      * @return \stdClass
      */
-    public function composer(ProjectInterface $project, $reference)
+    public function composer($reference)
     {
-        return $this->dispatch(new GetComposer($project, $reference));
+        return $this->dispatch(new GetComposer($this, $reference));
     }
 
     /**
-     * Return the page content for a project.
+     * Validate the configuration.
      *
-     * @param ProjectInterface $project
-     * @param                  $reference
-     * @param                  $page
-     * @return string
+     * @param ConfigurationFormBuilder $builder
+     * @return bool
      */
-    public function content(ProjectInterface $project, $reference, $page)
+    public function validate(ConfigurationFormBuilder $builder)
     {
-        return $this->dispatch(new GetContent($project, $reference, $page));
+        return $this->dispatch(new ValidateConfiguration($this, $reference));
     }
 }
