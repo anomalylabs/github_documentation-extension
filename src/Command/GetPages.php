@@ -90,22 +90,13 @@ class GetPages
 
         $client->authenticate($token, null, 'http_token');
 
-        if (!$this->path) {
-
-            $this->path = 'docs/' . $config->get('app.locale');
-
-            if (!$client->repos()->contents()->exists($username, $repository, $this->path, $this->reference)) {
-                $this->path = 'docs/' . $config->get('app.fallback_locale');
-            }
-        }
-
         $content = $client
             ->repos()
             ->contents()
             ->show(
                 $username,
                 $repository,
-                $this->path,
+                $this->path ?: 'docs',
                 $this->reference
             );
 
@@ -114,7 +105,7 @@ class GetPages
 
                 if ($resource['type'] == 'dir') {
 
-                    $pages[$resource['name']] = $this->dispatch(
+                    $pages[$parser->name($resource['name'])] = $this->dispatch(
                         new GetPages($this->extension, $this->reference, $resource['path'])
                     );
                 }
@@ -125,9 +116,11 @@ class GetPages
                         new GetContent($this->extension, $this->reference, $resource['path'])
                     );
 
-                    $pages[basename(
-                        $resource['name'],
-                        '.' . pathinfo($resource['name'], PATHINFO_EXTENSION)
+                    $pages[$parser->name(
+                        basename(
+                            $resource['name'],
+                            '.' . pathinfo($resource['name'], PATHINFO_EXTENSION)
+                        )
                     )] = array_merge(
                         ['content' => $parser->content($content)],
                         $parser->attributes($content)
