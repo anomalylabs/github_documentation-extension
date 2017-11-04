@@ -3,6 +3,8 @@
 use Anomaly\ConfigurationModule\Configuration\Form\ConfigurationFormBuilder;
 use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
 use Anomaly\GithubDocumentationExtension\Command\GetComposer;
+use Anomaly\GithubDocumentationExtension\Command\GetLocales;
+use Anomaly\GithubDocumentationExtension\Command\GetPage;
 use Anomaly\GithubDocumentationExtension\Command\GetPages;
 use Anomaly\GithubDocumentationExtension\Command\GetStructure;
 
@@ -26,25 +28,37 @@ class GithubDocumentationExtension extends DocumentationExtension
     protected $provides = 'anomaly.module.documentation::documentation.github';
 
     /**
-     * Return the documentation structure.
+     * Return the available locales.
      *
      * @param $reference
      * @return array
      */
-    public function structure($reference)
+    public function locales($reference)
     {
-        return $this->dispatch(new GetStructure($this, $reference));
+        return $this->dispatch(new GetLocales($this, $reference));
     }
 
     /**
-     * Return the documentation pages.
+     * Return the documentation structure.
+     *
+     * @param $reference
+     * @param $locale
+     * @return array
+     */
+    public function structure($reference, $locale)
+    {
+        return $this->dispatch(new GetStructure($this, $reference, $locale));
+    }
+
+    /**
+     * Return a documentation page.
      *
      * @param $reference
      * @return array
      */
-    public function pages($reference)
+    public function page($reference, $locale, $path)
     {
-        return $this->dispatch(new GetPages($this, $reference));
+        return $this->dispatch(new GetPage($this, $reference, $locale, $path));
     }
 
     /**
@@ -66,6 +80,6 @@ class GithubDocumentationExtension extends DocumentationExtension
      */
     public function validate(ConfigurationFormBuilder $builder)
     {
-        return $this->dispatch(new ValidateConfiguration($this, $reference));
+        throw new \Exception('Implement VALIDATE method');
     }
 }

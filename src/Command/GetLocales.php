@@ -2,23 +2,19 @@
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
 use Anomaly\DocumentationModule\Documentation\DocumentationExtension;
-use Anomaly\DocumentationModule\Documentation\DocumentationParser;
 use Anomaly\DocumentationModule\Project\Contract\ProjectInterface;
 use Github\Client;
-use Illuminate\Contracts\Config\Repository;
-use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Config\Repository;
 
 /**
- * Class GetPages
+ * Class GetLocales
  *
  * @link   http://pyrocms.com/
  * @author PyroCMS, Inc. <support@pyrocms.com>
  * @author Ryan Thompson <ryan@pyrocms.com>
  */
-class GetPages
+class GetLocales
 {
-
-    use DispatchesJobs;
 
     /**
      * The documentation extension.
@@ -42,7 +38,7 @@ class GetPages
     protected $path;
 
     /**
-     * Create a new GetPages instance.
+     * Create a new GetStructure instance.
      *
      * @param ProjectInterface $project
      * @param string           $reference
@@ -59,16 +55,11 @@ class GetPages
      * Handle the command.
      *
      * @param ConfigurationRepositoryInterface $configuration
-     * @param DocumentationParser              $parser
      * @param Repository                       $config
      * @return array
      */
-    public function handle(
-        ConfigurationRepositoryInterface $configuration,
-        DocumentationParser $parser,
-        Repository $config
-    ) {
-        $pages = [];
+    public function handle(ConfigurationRepositoryInterface $configuration, Repository $config)
+    {
 
         $project = $this->extension->getProject();
 
@@ -90,46 +81,32 @@ class GetPages
 
         $client->authenticate($token, null, 'http_token');
 
-        $content = $client
-            ->repos()
-            ->contents()
-            ->show(
-                $username,
-                $repository,
-                $this->path ?: 'docs',
-                $this->reference
-            );
-
-        array_map(
-            function ($resource) use ($parser, &$pages) {
-
-                if ($resource['type'] == 'dir') {
-
-                    $pages[$parser->name($resource['name'])] = $this->dispatch(
-                        new GetPages($this->extension, $this->reference, $resource['path'])
+        $content = cache()->remember(
+            $this->path,
+            10,
+            function () use ($client, $username, $repository) {
+                return $client
+                    ->repos()
+                    ->contents()
+                    ->show(
+                        $username,
+                        $repository,
+                        $this->path ?: 'docs',
+                        $this->reference
                     );
-                }
-
-                if ($resource['type'] != 'dir') {
-
-                    $content = $this->dispatch(
-                        new GetContent($this->extension, $this->reference, $resource['path'])
-                    );
-
-                    $pages[$parser->name(
-                        basename(
-                            $resource['name'],
-                            '.' . pathinfo($resource['name'], PATHINFO_EXTENSION)
-                        )
-                    )] = array_merge(
-                        ['content' => $parser->content($content)],
-                        $parser->attributes($content)
-                    );
-                }
-            },
-            $content
+            }
         );
 
-        return $pages;
+        return array_map(
+            function ($resource) {
+                return $resource['name'];
+            },
+            array_filter(
+                $content,
+                function ($resource) {
+                    return $resource['type'] == 'dir';
+                }
+            )
+        );
     }
 }
