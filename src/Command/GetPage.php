@@ -119,12 +119,13 @@ class GetPage
         $data    = $parser->attributes($content);
         $content = $parser->content($content);
 
+        $data['path'] = $this->path;
+
         return [
             'title'            => array_pull($data, 'title'),
             'meta_title'       => array_pull($data, 'meta_title'),
             'meta_description' => array_pull($data, 'meta_description'),
             'path'             => $parser->path($this->path),
-            'real_path'        => $this->path,
             'content'          => $content,
             'data'             => $data,
         ];
