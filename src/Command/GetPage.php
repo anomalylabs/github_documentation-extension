@@ -98,21 +98,15 @@ class GetPage
 
         $client->authenticate($token, null, 'http_token');
 
-        $page = cache()->remember(
-            'content.' . $path,
-            10,
-            function () use ($path, $client, $username, $repository) {
-                return $client
-                    ->repos()
-                    ->contents()
-                    ->show(
-                        $username,
-                        $repository,
-                        $path,
-                        $this->reference
-                    );
-            }
-        );
+        $page = $client
+            ->repos()
+            ->contents()
+            ->show(
+                $username,
+                $repository,
+                $path,
+                $this->reference
+            );
 
         $content = base64_decode(array_get($page, 'content'));
 
