@@ -99,7 +99,7 @@ class GetStructure
         }
 
         $content = cache()->remember(
-            $this->path,
+            $username.$repository.$this->path,
             10,
             function () use ($client, $username, $repository) {
                 return $client
