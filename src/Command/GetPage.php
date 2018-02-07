@@ -98,26 +98,23 @@ class GetPage
 
         $client->authenticate($token, null, 'http_token');
 
-        $page = cache()->remember(
-            'content.' . $path,
-            10,
-            function () use ($path, $client, $username, $repository) {
-                return $client
-                    ->repos()
-                    ->contents()
-                    ->show(
-                        $username,
-                        $repository,
-                        $path,
-                        $this->reference
-                    );
-            }
-        );
+        $page = $client
+            ->repos()
+            ->contents()
+            ->show(
+                $username,
+                $repository,
+                $path,
+                $this->reference
+            );
 
         $content = base64_decode(array_get($page, 'content'));
 
         $data    = $parser->attributes($content);
         $content = $parser->content($content);
+
+        $data['path'] = $this->path;
+        $data['url']  = "https://github.com/{$username}/{$repository}/tree/{$this->reference}/docs/{$this->locale}{$this->path}.md";
 
         return [
             'title'            => array_pull($data, 'title'),

@@ -82,7 +82,7 @@ class GetLocales
         $client->authenticate($token, null, 'http_token');
 
         $content = cache()->remember(
-            $this->path,
+            $username.$repository.$this->path,
             10,
             function () use ($client, $username, $repository) {
                 return $client
