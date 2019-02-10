@@ -51,9 +51,9 @@ class GetPage
      * Create a new GetPage instance.
      *
      * @param DocumentationExtension $extension
-     * @param string                 $reference
+     * @param string $reference
      * @param                        $locale
-     * @param string                 $path
+     * @param string $path
      */
     public function __construct(DocumentationExtension $extension, $reference, $locale, $path)
     {
@@ -66,8 +66,8 @@ class GetPage
     /**
      * Handle the command.
      *
-     * @param Repository                       $config
-     * @param DocumentationParser              $parser
+     * @param Repository $config
+     * @param DocumentationParser $parser
      * @param ConfigurationRepositoryInterface $configuration
      * @return string
      */
@@ -93,6 +93,12 @@ class GetPage
         );
 
         $path = 'docs/' . $this->locale . $this->path . '.md';
+
+        $segments = explode(DIRECTORY_SEPARATOR, ltrim($this->path, DIRECTORY_SEPARATOR));
+
+        $last = array_pop($segments);
+
+        $parts = explode('.', $last);
 
         $client = new Client();
 
@@ -121,6 +127,7 @@ class GetPage
             'meta_title'       => array_pull($data, 'meta_title'),
             'meta_description' => array_pull($data, 'meta_description'),
             'path'             => $parser->path($this->path),
+            'sort_order'       => (int)array_shift($parts),
             'content'          => $content,
             'data'             => $data,
         ];
