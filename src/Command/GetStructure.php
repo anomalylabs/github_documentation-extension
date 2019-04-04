@@ -51,9 +51,9 @@ class GetStructure
      * Create a new GetStructure instance.
      *
      * @param ProjectInterface $project
-     * @param string           $reference
-     * @param string           $locale
-     * @param null             $path
+     * @param string $reference
+     * @param string $locale
+     * @param null $path
      */
     public function __construct(DocumentationExtension $extension, $reference, $locale, $path = null)
     {
@@ -67,7 +67,7 @@ class GetStructure
      * Handle the command.
      *
      * @param ConfigurationRepositoryInterface $configuration
-     * @param Repository                       $config
+     * @param Repository $config
      * @return array
      */
     public function handle(ConfigurationRepositoryInterface $configuration, Repository $config)
@@ -99,7 +99,7 @@ class GetStructure
         }
 
         $content = cache()->remember(
-            $username.$repository.$this->path,
+            $username . $repository . $this->path,
             10,
             function () use ($client, $username, $repository) {
                 return $client
@@ -117,14 +117,24 @@ class GetStructure
         array_map(
             function ($resource) use (&$pages) {
 
+                $path = str_replace(
+                    'docs/' . $this->locale,
+                    '',
+                    $resource['path']
+                );
+
                 if ($resource['type'] == 'file') {
-                    $pages[] = dirname(
-                            str_replace(
-                                'docs/' . $this->locale,
-                                '',
-                                $resource['path']
+                    $pages[] = '/' . implode(
+                            '/',
+                            array_unique(
+                                array_filter(
+                                    [
+                                        dirname($path) == '/' ? null : dirname(ltrim($path, '/')),
+                                        basename($resource['name'], '.md'),
+                                    ]
+                                )
                             )
-                        ) . '/' . basename($resource['name'], '.md');
+                        );
                 }
 
                 if ($resource['type'] == 'dir') {
