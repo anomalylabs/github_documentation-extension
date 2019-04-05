@@ -119,8 +119,8 @@ class GetPage
         $data    = $parser->attributes($content);
         $content = $parser->content($content);
 
-        $data['path']   = $this->path;
-        $data['source'] = "https://github.com/{$username}/{$repository}/tree/{$this->reference}/docs/{$this->locale}{$this->path}.md";
+        $data['path'] = $this->path;
+        $data['url']  = "https://github.com/{$username}/{$repository}/tree/{$this->reference}/docs/{$this->locale}{$this->path}.md";
 
         return [
             'title'            => array_pull($data, 'title'),
